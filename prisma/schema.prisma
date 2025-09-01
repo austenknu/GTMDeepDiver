@@ -1,0 +1,282 @@
+// GTM Deep Diver Prisma Schema
+// Comprehensive data model for sales research and ROI analysis platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core project entity that contains all research
+model Project {
+  id              String   @id @default(uuid())
+  ownerId         String   // Clerk user ID
+  name            String   @db.VarChar(100)
+  companyName     String   @db.VarChar(100)
+  companyDomain   String   @db.VarChar(200)
+  productCategory String   @db.VarChar(50)
+  status          ProjectStatus @default(INIT)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  evidence        Evidence[]
+  pains           Pain[]
+  stakeholders    Stakeholder[]
+  outreachAssets  OutreachAsset[]
+  roiCalculations RoiCalculation[]
+  exports         ProjectExport[]
+  
+  @@map("projects")
+}
+
+// Evidence sources (URLs, files, notes) with metadata
+model Evidence {
+  id          String   @id @default(uuid())
+  projectId   String
+  type        EvidenceType
+  url         String?  @db.VarChar(500)
+  fileKey     String?  @db.VarChar(200) // S3 key
+  title       String   @db.VarChar(200)
+  author      String?  @db.VarChar(100)
+  publishedAt DateTime?
+  snippet     String?  @db.Text
+  contentHash String   @db.VarChar(64) // SHA-256 for deduplication
+  approved    Boolean  @default(false) // Security scan passed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  signals     Signal[]
+  
+  @@map("evidence")
+  @@index([projectId])
+  @@index([contentHash])
+}
+
+// Extracted insights from evidence sources
+model Signal {
+  id          String     @id @default(uuid())
+  evidenceId  String
+  kind        SignalKind
+  text        String     @db.VarChar(500)
+  weight      Float      @default(0.5) // 0-1 importance
+  confidence  Float      @default(0.6) // 0-1 confidence
+  createdAt   DateTime   @default(now())
+  
+  // Relations
+  evidence    Evidence   @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  
+  @@map("signals")
+  @@index([evidenceId])
+}
+
+// Pain points mapped from signals with business impact
+model Pain {
+  id             String       @id @default(uuid())
+  projectId      String
+  name           String       @db.VarChar(120)
+  userGroup      String       @db.VarChar(80)
+  businessMetric BusinessMetric
+  impactNote     String       @db.VarChar(500)
+  confidence     Float        // 0-1 confidence level
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  // Relations
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  evidenceLinks  PainEvidence[]
+  
+  @@map("pains")
+  @@index([projectId])
+}
+
+// Junction table for pain-evidence relationships
+model PainEvidence {
+  id         String @id @default(uuid())
+  painId     String
+  evidenceId String
+  
+  // Relations
+  pain       Pain     @relation(fields: [painId], references: [id], onDelete: Cascade)
+  
+  @@map("pain_evidence")
+  @@unique([painId, evidenceId])
+}
+
+// ROI calculation inputs and results
+model RoiCalculation {
+  id                          String   @id @default(uuid())
+  projectId                   String
+  
+  // Input parameters
+  nPeople                     Int
+  costPerHour                 Float
+  hoursSavedPerPersonPerMonth Float
+  errorCostAnnual             Float
+  errorReductionPct           Float
+  cloudSpendAnnual            Float
+  cloudReductionPct           Float
+  riskCostAnnual              Float
+  riskReductionPct            Float
+  licenseCostAnnual           Float
+  implementationOneTime       Float
+  
+  // Calculated scenarios (JSON stored)
+  lowScenario                 String   @db.Text // JSON RoiScenario
+  mostLikelyScenario          String   @db.Text // JSON RoiScenario  
+  highScenario                String   @db.Text // JSON RoiScenario
+  
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  
+  // Relations
+  project                     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("roi_calculations")
+  @@index([projectId])
+}
+
+// Stakeholder personas and contact information
+model Stakeholder {
+  id          String          @id @default(uuid())
+  projectId   String
+  name        String          @db.VarChar(100)
+  title       String          @db.VarChar(100)
+  persona     PersonaType
+  goals       String          @db.Text // JSON array of strings
+  objections  String          @db.Text // JSON array of strings
+  proofPoints String          @db.Text // JSON array of strings
+  handleUrl   String?         @db.VarChar(500)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  // Relations
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("stakeholders")
+  @@index([projectId])
+}
+
+// Generated outreach assets (emails, DMs, etc.)
+model OutreachAsset {
+  id          String          @id @default(uuid())
+  projectId   String
+  kind        OutreachKind
+  subject     String          @db.VarChar(200)
+  body        String          @db.Text
+  assumptions String          @db.Text // JSON array of strings
+  sources     String          @db.Text // JSON array of URLs
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  // Relations
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("outreach_assets")
+  @@index([projectId])
+}
+
+// Project exports (Markdown + JSON)
+model ProjectExport {
+  id           String   @id @default(uuid())
+  projectId    String
+  markdownData String   @db.Text
+  jsonData     String   @db.Text
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("project_exports")
+  @@index([projectId])
+}
+
+// Audit log for compliance and debugging
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String   // Clerk user ID
+  projectId String?
+  action    String   @db.VarChar(100)
+  detail    String   @db.Text
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?  @db.VarChar(500)
+  createdAt DateTime @default(now())
+  
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+// User roles and permissions
+model UserRole {
+  id     String @id @default(uuid())
+  userId String @unique // Clerk user ID
+  role   Role   @default(USER)
+  
+  @@map("user_roles")
+}
+
+// Enums
+enum ProjectStatus {
+  INIT
+  INDUSTRY
+  COMPANY
+  PAIN
+  ROI
+  STAKE
+  OUTREACH
+  QA
+  READY
+}
+
+enum EvidenceType {
+  url
+  file
+  note
+}
+
+enum SignalKind {
+  industry
+  company
+  security
+  hiring
+  product
+  financial
+  compliance
+}
+
+enum BusinessMetric {
+  hours
+  errors
+  cycle_time
+  cloud_spend
+  sla_breach
+  churn
+  contract_risk
+}
+
+enum PersonaType {
+  Economic_Decider
+  Technical_Evaluator
+  User_Owner
+  Compliance_Procurement
+}
+
+enum OutreachKind {
+  email_economic
+  email_technical
+  email_user
+  linkedin_dm
+}
+
+enum Role {
+  ADMIN
+  USER
+  GUEST
+}

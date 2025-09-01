@@ -1,6 +1,6 @@
 # GTM Deep Diver
 
-A SaaS tool that guides sales and research agents through systematic company deep-dives, transforming public evidence into pain-point maps and quantified ROI business cases with persona-aware outreach assets.
+A new tool that guides sales strategy and research agents through systematic company deep-dives, transforming public evidence into pain-point maps and quantified ROI business cases with persona-aware outreach assets.
 
 ## 🎯 Overview
 
@@ -263,15 +263,6 @@ vercel --prod
 
 ## 📄 License
 
-This project is licensed under the ISC License - see the LICENSE file for details.
+This project is licensed under the MIT License 
 
-## 🆘 Support
-
-For questions, issues, or feature requests:
-- **Issues**: [GitHub Issues](https://github.com/austenknu/GTMDeepDiver/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/austenknu/GTMDeepDiver/discussions)
-- **Email**: support@gtm-deep-diver.com
-
----
-
-Built with ❤️ for sales professionals who value systematic research and data-driven outreach.
+Built with for sales professionals who value systematic research and data-driven outreach.

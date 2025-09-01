@@ -265,4 +265,4 @@ vercel --prod
 
 This project is licensed under the MIT License 
 
-Built with for sales professionals who value systematic research and data-driven outreach.
+Built for sales professionals who value systematic research and data-driven outreach.

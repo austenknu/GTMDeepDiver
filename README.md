@@ -1,10 +1,10 @@
-# GTM Deep Diver
+# GTM Research Agent
 
-A new tool that guides sales strategy and research agents through systematic company deep-dives, transforming public evidence into pain-point maps and quantified ROI business cases with persona-aware outreach assets.
+Agentic workflow for sales strategy and research to do systematic company deep-dives, transforming public evidence into pain-point maps and quantified ROI business cases with persona-aware outreach assets
 
 ## 🎯 Overview
 
-GTM Deep Diver helps sales teams conduct systematic research by:
+GTM Research Agent helps sales teams conduct systematic research by:
 - **Guided Research Process**: 7-phase wizard for comprehensive company analysis
 - **Evidence Management**: Centralized collection of URLs, files, and notes with provenance tracking
 - **AI-Powered Insights**: Automated signal extraction and pain point mapping
@@ -63,7 +63,7 @@ src/
 
 1. **Clone and setup:**
    ```bash
-   git clone https://github.com/austenknu/GTMDeepDiver.git
+   git clone https://github.com/austenknu/GTMResearchAgent.git
    cd GTMDeepDiver
    npm install
    ```
